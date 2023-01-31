@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "264904574906",
+    "project_id": "atlapaltinmessenger",
+    "storage_bucket": "atlapaltinmessenger.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:264904574906:android:c0b1d1f1a4baba3faf7f83",
+        "android_client_info": {
+          "package_name": "ru.atlapaltin.atlapaltinmessenger"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "264904574906-36eb4pgbnjb6941f4cg9nlke37hnua38.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDvy33GdKRgT2hwZDssJCjJ9_Pot7WIsog"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "264904574906-36eb4pgbnjb6941f4cg9nlke37hnua38.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

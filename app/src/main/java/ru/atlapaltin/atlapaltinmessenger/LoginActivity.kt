@@ -11,23 +11,32 @@ class LoginActivity: AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        //инициализация xml UI экрана входа с существующим аккаунтом (activity_login)
         val binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        //кнопка входа (xml activity_login) + слушатель нажатий
         binding.loginButton.setOnClickListener {
+            //поле ввода email (xml activity_login)
             val email = binding.loginEmailAddress.text.toString()
+            //поле ввода пароля (xml activity_login)
             val password = binding.loginPassword.text.toString()
 
+            //отслеживание полей ввода email и пароля для журнала событий
             Log.d("Login", "Attempt login with email/pw: $email/***")
 
+            //авторизация пользователя через Firebase
             FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
 //          .addOnCompleteListener()
 //          .add
 
         }
 
+        //возврат к регистрации (текст backToRegistrationLink
+        // в xml activity_login) + слушатель нажатия по этому тексту
         binding.backToRegistrationLink.setOnClickListener{
             finish()
         }
+
     }
 }

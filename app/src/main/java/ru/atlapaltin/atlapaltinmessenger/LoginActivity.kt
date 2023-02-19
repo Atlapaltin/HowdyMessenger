@@ -18,15 +18,15 @@ class LoginActivity: AppCompatActivity() {
         //кнопка входа (xml activity_login) + слушатель нажатий
         binding.loginButton.setOnClickListener {
             //поле ввода email (xml activity_login)
-            val email = binding.loginEmailAddress.text.toString()
+            val signInEmail = binding.loginEmailAddress.text.toString()
             //поле ввода пароля (xml activity_login)
-            val password = binding.loginPassword.text.toString()
+            val signInPassword = binding.loginPassword.text.toString()
 
             //отслеживание полей ввода email и пароля для журнала событий
-            Log.d("Login", "Attempt login with email/pw: $email/***")
+            Log.d("Login", "Attempt login with email/password: $signInEmail/***")
 
             //авторизация пользователя через Firebase
-            FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
+            FirebaseAuth.getInstance().signInWithEmailAndPassword(signInEmail, signInPassword)
 //          .addOnCompleteListener()
 //          .add
 

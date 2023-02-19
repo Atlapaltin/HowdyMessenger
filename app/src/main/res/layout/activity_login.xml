@@ -51,15 +51,16 @@
         android:layout_width="0dp"
         android:layout_height="50dp"
         android:layout_marginTop="32dp"
+        android:background="@drawable/rounded_button"
         android:text="LOG IN"
-        android:textColor="#070707"
+        android:textColor="@android:color/white"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:backgroundTint="@android:color/holo_orange_dark"
         app:iconTint="#FFC107"
         app:layout_constraintEnd_toEndOf="@+id/loginPassword"
         app:layout_constraintStart_toStartOf="@+id/loginPassword"
         app:layout_constraintTop_toBottomOf="@+id/loginPassword" />
+
     <TextView
         android:id="@+id/backToRegistrationLink"
         android:layout_width="wrap_content"
@@ -70,7 +71,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:text="Back to registration"
-        android:textColor="@android:color/holo_orange_dark"
+        android:textColor="@android:color/white"
         android:textStyle="bold|italic"
         android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="@+id/loginButton"

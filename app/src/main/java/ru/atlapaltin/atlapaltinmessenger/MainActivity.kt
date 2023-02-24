@@ -12,13 +12,12 @@ import com.google.firebase.auth.FirebaseAuth
 import ru.atlapaltin.atlapaltinmessenger.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityMainBinding
-
+   private lateinit var binding: ActivityMainBinding
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         //инициализация xml UI экрана регистарции (activity_main)
-        val binding = ActivityMainBinding.inflate(layoutInflater)
+        binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         //кнопка регистрации (xml activity_main) + слушатель нажатий

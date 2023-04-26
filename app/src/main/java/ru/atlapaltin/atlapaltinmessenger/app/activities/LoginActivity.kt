@@ -1,4 +1,4 @@
-package ru.atlapaltin.atlapaltinmessenger
+package ru.atlapaltin.atlapaltinmessenger.app.activities
 
 import android.os.Bundle
 import android.util.Log

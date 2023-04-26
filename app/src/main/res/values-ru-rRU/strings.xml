@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Howdy</string>
+    <string name="select_avatar_hint">Выберите фото или изображение из галереи</string>
+    <string name="launch_camera_hint">Сделайте фотографию</string>
+    <string name="avatar_field">Поле для аватара</string>
+</resources>

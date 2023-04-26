@@ -6,22 +6,50 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#333F4D"
-    tools:context=".MainActivity">
+    tools:context=".app.activities.UserRegistrationActivity">
 
-    <Button
-        android:id="@+id/selectPhotoButton"
+    <ImageView
+        android:id="@+id/avatar"
         android:layout_width="200dp"
         android:layout_height="200dp"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="15dp"
         android:background="@drawable/rounded_select_photo_button"
-        android:text="SELECT AVATAR"
-        android:textColor="@android:color/white"
+        android:contentDescription="@string/avatar_field"
+        android:textColorHint="#000000"
         android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/usernameEdittextRegister"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.497"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        android:importantForAccessibility="no"
+        android:scaleType="centerCrop"
+        />
+
+    <Button
+        android:id="@+id/selectAvatarFromGallery"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        app:layout_constraintBottom_toTopOf="@+id/usernameEdittextRegister"
+        app:layout_constraintTop_toBottomOf="@+id/avatar"
+        app:layout_constraintStart_toStartOf="@+id/avatar"
+        android:background="@drawable/attach_photo_icon"
+        android:contentDescription="@string/select_avatar_hint"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="32dp"
+        />
+    <Button
+        android:id="@+id/cameraButton"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        app:layout_constraintBottom_toTopOf="@+id/usernameEdittextRegister"
+        app:layout_constraintTop_toBottomOf="@+id/avatar"
+        app:layout_constraintEnd_toEndOf="@+id/avatar"
+        android:background="@drawable/camera_icon"
+        android:contentDescription="@string/launch_camera_hint"
+        android:layout_marginTop="15dp"
+        android:layout_marginBottom="15dp"
+        />
 
     <EditText
         android:id="@+id/usernameEdittextRegister"
@@ -29,20 +57,21 @@
         android:layout_height="50dp"
         android:layout_marginStart="32dp"
         android:layout_marginLeft="32dp"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="10dp"
         android:layout_marginEnd="32dp"
         android:layout_marginRight="32dp"
         android:background="@drawable/rounded_edittext_register_login"
         android:ems="10"
         android:hint="Username"
         android:inputType="textPersonName"
-        android:paddingLeft="16dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         android:textColor="#090808"
         android:textColorHint="#546E7A"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/selectPhotoButton" />
+        app:layout_constraintTop_toBottomOf="@+id/selectAvatarFromGallery" />
 
     <EditText
         android:id="@+id/emailEdittextRegister"
@@ -53,7 +82,8 @@
         android:ems="10"
         android:hint="E-mail"
         android:inputType="textEmailAddress"
-        android:paddingLeft="16dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         android:textColor="#090808"
         android:textColorHint="#546E7A"
         app:layout_constraintEnd_toEndOf="@+id/usernameEdittextRegister"
@@ -70,7 +100,8 @@
         android:ems="10"
         android:hint="Password"
         android:inputType="textPassword"
-        android:paddingLeft="16dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         android:textColor="#090808"
         android:textColorHint="#546E7A"
         app:layout_constraintEnd_toEndOf="@+id/emailEdittextRegister"

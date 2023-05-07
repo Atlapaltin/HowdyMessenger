@@ -1,64 +1,91 @@
 package ru.atlapaltin.atlapaltinmessenger.app.activities
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Base64
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import ru.atlapaltin.atlapaltinmessenger.BuildConfig
-
 import ru.atlapaltin.atlapaltinmessenger.databinding.ActivityMainBinding
 import java.io.File
 
 class UserRegistrationActivity : AppCompatActivity() {
-   private lateinit var binding: ActivityMainBinding
-    private lateinit var imageUri: Uri
-    val REQUEST_PICK_IMAGE = 0
-    val REQUEST_IMAGE_CAPTURE = 1
 
-    //переменная для выбора аватарки
-    val takePicture = registerForActivityResult(ActivityResultContracts.StartActivityForResult())
-    { result ->
+    private lateinit var binding: ActivityMainBinding
+    private lateinit var imageUri: Uri
+    private companion object {
+        private val REQUIRED_PERMISSIONS: Array<String> = arrayOf (
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.CAMERA
+        )
+    }
+
+    private val takePicture = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
-            // Сохраняем снимок в хранилище внешнего устройства
             val imageStr = result.data?.extras?.getString("data") // получаем строку
-            val imageBytes = Base64.decode(imageStr, Base64.DEFAULT) // декодируем строку в массив байт
-            // создаем объект Bitmap из массива байт
+            // декодируем строку в массив байт
+            val imageBytes = Base64.decode(imageStr, Base64.DEFAULT)
+            // декодируем строку в Bitmap
             val imageBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-            val imageFile = File.createTempFile("profile_image", ".jpeg",
-                applicationContext.externalCacheDir)
-            imageFile.outputStream().use {
-                imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, it)
+            val scope = CoroutineScope(Dispatchers.IO)
+            scope.launch {
+                // создаем файл в кэш-директории
+                val imageFile = withContext(Dispatchers.IO) {
+                    File.createTempFile(
+                        "profile_image",
+                        ".jpeg",
+                        applicationContext.externalCacheDir
+                    )
+                }
+                imageFile.outputStream().use {
+                    // сохраняем Bitmap в файл
+                    imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, it)
+                }
+                // получаем Uri для файла
+                withContext(Dispatchers.Main) {
+                    imageUri = FileProvider.getUriForFile(
+                        this@UserRegistrationActivity,
+                        "${BuildConfig.APPLICATION_ID}.provider",
+                        imageFile
+                    )
+                    binding.avatar.setImageURI(imageUri)
+                }
             }
-            imageUri = FileProvider.getUriForFile(
-                this, "${BuildConfig.APPLICATION_ID}.provider", imageFile)
-            // Отображаем снимок
-            binding.avatar.setImageURI(imageUri)
         }
     }
 
+    private val pickImageFromGallery = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            result.data?.data?.also { uri ->
+                binding.avatar.setImageURI(uri)
+            }
+        }
+    }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) ==
-            PackageManager.PERMISSION_GRANTED) {
-            // Тут запускаем приложение
-        } else {
-            val CAMERA_PERMISSION_CODE = 100
-            requestPermissions(arrayOf(android.Manifest.permission.CAMERA), CAMERA_PERMISSION_CODE)
-        }
-
+        checkPermissions()
         //инициализация xml UI экрана регистарции (activity_main)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -72,7 +99,7 @@ class UserRegistrationActivity : AppCompatActivity() {
         binding.alreadyHaveAccount.setOnClickListener {
 
             //отслеживаем событие перехода на экран входа LoginActivity
-            Log.d("MainActivity", "Switching to login screen")
+            Log.d("RegistrationActivity", "Switching to login screen")
             startActivity(Intent(this, LoginActivity::class.java))
         }
 
@@ -81,41 +108,18 @@ class UserRegistrationActivity : AppCompatActivity() {
         binding.cameraButton.setOnClickListener {
             //регистрируем нажатия на кнопку выбора аватарки
             Log.d("MainActivity", "cameraButton clicked")
-
-            Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
-                takePictureIntent.resolveActivity(packageManager)?.also {
-                    // Запускаем камеру
-                    takePicture.launch(takePictureIntent)
-                }
-            }
+            //запускаем метод фотографирования
+            takePictureMethod()
         }
 
         binding.selectAvatarFromGallery.setOnClickListener {
             //регистрируем нажатия на кнопку выбора аватарки selectAvatarFromGallery
             Log.d("MainActivity", "selectAvatarFromGallery button clicked")
             //выбираем изображение или фото из галереи смратфона
-            pickImageFromGallery()
-        }
-
-        binding.cameraButton.setOnClickListener {
-            // запускаем камеру
-            takePictureMethod()
+            pickImageFromGallery ()
         }
     }
 
-    //переменная для выбора фото из галереи смартфона
-    private val pickImageFromGallery = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == RESULT_OK) {
-            result.data?.data?.also { uri ->
-                // Отображаем изображение
-                binding.avatar.setImageURI(uri)
-            }
-        }
-    }
-
-    //функция для выбора фото из галереи смартфона
     private fun pickImageFromGallery() {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
@@ -124,40 +128,40 @@ class UserRegistrationActivity : AppCompatActivity() {
         pickImageFromGallery.launch(intent)
     }
 
-
     @SuppressLint("QueryPermissionsNeeded")
     private fun takePictureMethod() {
-        // Проверяем разрешения
-        if (ActivityCompat.checkSelfPermission(this,
-                android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(this,
-                android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-            // запускаем камеру
             Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
                 takePictureIntent.resolveActivity(packageManager)?.also {
                     takePicture.launch(takePictureIntent)
                 }
             }
-        } else {
-            // Запрашиваем разрешения
-            ActivityCompat.requestPermissions(this,
-                arrayOf(android.Manifest.permission.CAMERA,
-                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE), REQUEST_IMAGE_CAPTURE)
         }
-    }
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray)
-    {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQUEST_IMAGE_CAPTURE) {
-            if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
-                // разрешения получены
+
+    private val permissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { map ->
+            if (map.values.all(it) && map.values.isNotEmpty()) {
                 takePictureMethod()
             } else {
-                // разрешения не были получены
-                Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    applicationContext,
+                    "Permissions denied",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
+    private fun checkPermissions (){
+        val isAllGranted = REQUIRED_PERMISSIONS.all{ permissions ->
+            ContextCompat.checkSelfPermission(
+                applicationContext, permissions
+            ) == PackageManager.PERMISSION_GRANTED
+            }
+        if (isAllGranted) {
+            takePictureMethod()
+        } else {
+            permissionLauncher.launch(REQUIRED_PERMISSIONS)
+        }
     }
+
 
     //метод регистрации пользователя
     private fun registrationMethod() {
@@ -172,7 +176,8 @@ class UserRegistrationActivity : AppCompatActivity() {
             Toast.makeText(
                 this,
                 "Please enter your registration email and password",
-                Toast.LENGTH_SHORT).show()
+                Toast.LENGTH_SHORT
+            ).show()
             return
         }
 
@@ -181,8 +186,9 @@ class UserRegistrationActivity : AppCompatActivity() {
         Log.d("MainActivity", "Password is: + $registrationPassword")
 
         //создание пользователя через Firebase
-        FirebaseAuth.getInstance().createUserWithEmailAndPassword(registrationEmail, registrationPassword)
-            .addOnCompleteListener{
+        FirebaseAuth.getInstance()
+            .createUserWithEmailAndPassword(registrationEmail, registrationPassword)
+            .addOnCompleteListener {
                 //проверяем, успешно ли создан пользователь
                 //(если не успешно, то возвращаемся к созданию пользователя и слушаем
                 // следующую попытку создания)
@@ -192,12 +198,13 @@ class UserRegistrationActivity : AppCompatActivity() {
             }
             //отслеживаем неудачные попытки создания пользователя，
             // выводим сообщение и записываем в журнал событий
-            .addOnFailureListener{
+            .addOnFailureListener {
                 Log.d("Main", "Failed to create user: ${it.message}")
                 Toast.makeText(
                     this,
                     "Please enter your registration email and password",
-                    Toast.LENGTH_SHORT).show()
+                    Toast.LENGTH_SHORT
+                ).show()
             }
     }
 }

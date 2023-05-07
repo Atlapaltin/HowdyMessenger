@@ -1,7 +1,8 @@
 buildscript {
     repositories {
         google()
-        mavenCentral()
+        mavenCentral ()
+        jcenter()
     }
     dependencies {
         classpath 'com.google.gms:google-services:4.3.15'

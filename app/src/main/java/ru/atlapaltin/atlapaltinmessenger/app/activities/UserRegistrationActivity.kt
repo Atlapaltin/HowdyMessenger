@@ -3,10 +3,10 @@ package ru.atlapaltin.atlapaltinmessenger.app.activities
 import android.Manifest
 import android.content.pm.PackageManager
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.icu.lang.UCharacter.GraphemeClusterBreak.T
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -15,14 +15,16 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.github.dhaval2404.imagepicker.ImagePicker
+import com.github.dhaval2404.imagepicker.constant.ImageProvider
 import ru.atlapaltin.atlapaltinmessenger.BuildConfig
 import ru.atlapaltin.atlapaltinmessenger.databinding.ActivityMainBinding
 import java.io.File
@@ -83,6 +85,23 @@ class UserRegistrationActivity : AppCompatActivity() {
         }
     }
 
+    private val pickPhotoLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            when (it.resultCode) {
+                ImagePicker.RESULT_ERROR -> {
+                    Snackbar.make(
+                        binding.root,
+                        ImagePicker.getError(it.data),
+                        Snackbar.LENGTH_LONG
+                    ).show()
+                }
+                Activity.RESULT_OK -> {
+                    val uri: Uri? = it.data?.data
+                    binding.avatar.setImageURI(uri)
+                }
+            }
+        }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -109,14 +128,36 @@ class UserRegistrationActivity : AppCompatActivity() {
         binding.cameraButton.setOnClickListener {
             //регистрируем нажатия на кнопку выбора аватарки
             Log.d("MainActivity", "cameraButton clicked")
-            //запускаем метод фотографирования
-            takePictureMethod()
+            //"НЕ"запускаем метод фотографирования
+            //takePictureMethod()
+            ImagePicker.with(this)
+                .cropSquare()
+                .compress(512)//.createIntent(pickPhotoLauncher::launch)
+
+                //Вариант с запуском камеры
+//                .provider(ImageProvider.CAMERA)
+
+                //Вариант с галереей
+//                .provider(ImageProvider.GALLERY)
+//                .galleryMimeTypes(
+//                    arrayOf(
+//                        "image/png",
+//                        "image/jpeg",
+//                    )
+//                )
+
+                //Если ни то ни другое предложит выбрать в приложении
+
+                .createIntent(pickPhotoLauncher::launch) //Запуск
         }
 
         binding.selectAvatarFromGallery.setOnClickListener {
             //регистрируем нажатия на кнопку выбора аватарки selectAvatarFromGallery
             Log.d("MainActivity", "selectAvatarFromGallery button clicked")
             //выбираем изображение или фото из галереи смратфона
+
+            //Можно также воспользоваться одним из вариантов с ImagePicker
+
             pickImageFromGallery ()
         }
     }
@@ -131,12 +172,12 @@ class UserRegistrationActivity : AppCompatActivity() {
 
     @SuppressLint("QueryPermissionsNeeded")
     private fun takePictureMethod() {
-            Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
-                takePictureIntent.resolveActivity(packageManager)?.also {
-                    takePicture.launch(takePictureIntent)
-                }
+        Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
+            takePictureIntent.resolveActivity(packageManager)?.also {
+                takePicture.launch(takePictureIntent)
             }
         }
+    }
 
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { map ->
@@ -155,7 +196,7 @@ class UserRegistrationActivity : AppCompatActivity() {
             ContextCompat.checkSelfPermission(
                 applicationContext, permissions
             ) == PackageManager.PERMISSION_GRANTED
-            }
+        }
         if (isAllGranted) {
             takePictureMethod()
             Toast.makeText(

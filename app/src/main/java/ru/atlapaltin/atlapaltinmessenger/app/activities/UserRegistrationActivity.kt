@@ -6,6 +6,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.icu.lang.UCharacter.GraphemeClusterBreak.T
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -139,7 +140,7 @@ class UserRegistrationActivity : AppCompatActivity() {
 
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { map ->
-            if (map.values.all(it) && map.values.isNotEmpty()) {
+            if (map.values.all {it} && map.values.isNotEmpty()) {
                 takePictureMethod()
             } else {
                 Toast.makeText(
@@ -157,6 +158,11 @@ class UserRegistrationActivity : AppCompatActivity() {
             }
         if (isAllGranted) {
             takePictureMethod()
+            Toast.makeText(
+                applicationContext,
+                "Permissions granted",
+                Toast.LENGTH_SHORT
+            ).show()
         } else {
             permissionLauncher.launch(REQUIRED_PERMISSIONS)
         }

@@ -2,77 +2,31 @@ package ru.atlapaltin.atlapaltinmessenger.app.activities
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
-import android.provider.MediaStore
-import android.util.Base64
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import com.github.dhaval2404.imagepicker.ImagePicker
 import com.github.dhaval2404.imagepicker.constant.ImageProvider
-import ru.atlapaltin.atlapaltinmessenger.BuildConfig
 import ru.atlapaltin.atlapaltinmessenger.databinding.ActivityMainBinding
-import java.io.File
 
 class UserRegistrationActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var imageUri: Uri
-    private companion object {
-        private val REQUIRED_PERMISSIONS: Array<String> = arrayOf (
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.CAMERA
-        )
-    }
 
-    private val takePicture = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == RESULT_OK) {
-            val imageStr = result.data?.extras?.getString("data") // получаем строку
-            // декодируем строку в массив байт
-            val imageBytes = Base64.decode(imageStr, Base64.DEFAULT)
-            // декодируем строку в Bitmap
-            val imageBitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-            val scope = CoroutineScope(Dispatchers.IO)
-            scope.launch {
-                // создаем файл в кэш-директории
-                val imageFile = withContext(Dispatchers.IO) {
-                    File.createTempFile(
-                        "profile_image",
-                        ".jpeg",
-                        applicationContext.externalCacheDir
-                    )
-                }
-                imageFile.outputStream().use {
-                    // сохраняем Bitmap в файл
-                    imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, it)
-                }
-                // получаем Uri для файла
-                withContext(Dispatchers.Main) {
-                    imageUri = FileProvider.getUriForFile(
-                        this@UserRegistrationActivity,
-                        "${BuildConfig.APPLICATION_ID}.provider",
-                        imageFile
-                    )
-                    binding.avatar.setImageURI(imageUri)
-                }
-            }
-        }
+    private companion object {
+        private val REQUIRED_PERMISSIONS: Array<String> =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+            { arrayOf(Manifest.permission.CAMERA) }
+            else { arrayOf(Manifest.permission.CAMERA) }
     }
 
     private val pickImageFromGallery = registerForActivityResult(
@@ -95,6 +49,7 @@ class UserRegistrationActivity : AppCompatActivity() {
                         Snackbar.LENGTH_LONG
                     ).show()
                 }
+
                 Activity.RESULT_OK -> {
                     val uri: Uri? = it.data?.data
                     binding.avatar.setImageURI(uri)
@@ -105,7 +60,6 @@ class UserRegistrationActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        checkPermissions()
         //инициализация xml UI экрана регистарции (activity_main)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -118,7 +72,7 @@ class UserRegistrationActivity : AppCompatActivity() {
         //(ссылка на текст в xml activity_main ("alreadyHaveAccount")
         binding.alreadyHaveAccount.setOnClickListener {
 
-            //отслеживаем событие перехода на экран входа LoginActivity
+            //регистрируем в журнале событие перехода на экран входа LoginActivity
             Log.d("RegistrationActivity", "Switching to login screen")
             startActivity(Intent(this, LoginActivity::class.java))
         }
@@ -126,18 +80,28 @@ class UserRegistrationActivity : AppCompatActivity() {
         //слушатель нажатий на кнопку камеры на экране регистрации
         //（ссылка на кнопку cameraButton в xml activity_main）
         binding.cameraButton.setOnClickListener {
-            //регистрируем нажатия на кнопку выбора аватарки
+            //регистрируем в журнале нажатия на кнопку выбора аватарки
             Log.d("MainActivity", "cameraButton clicked")
             //"НЕ"запускаем метод фотографирования
             //takePictureMethod()
+            checkPermissions()
             ImagePicker.with(this)
                 .cropSquare()
-                .compress(512)//.createIntent(pickPhotoLauncher::launch)
+                .compress(512)
 
-                //Вариант с запуском камеры
-//                .provider(ImageProvider.CAMERA)
+                //Запуск камеры
+                .provider(ImageProvider.CAMERA)
+                .createIntent(pickPhotoLauncher::launch) //Запуск интента
+        }
 
-                //Вариант с галереей
+        binding.selectAvatarFromGallery.setOnClickListener {
+            //регистрируем в журнале нажатия на кнопку выбора аватарки selectAvatarFromGallery
+            Log.d("MainActivity", "selectAvatarFromGallery button clicked")
+            //выбираем изображение или фото из галереи смратфона
+
+            pickImageFromGallery()
+
+            //Можно также воспользоваться ImagePicker:
 //                .provider(ImageProvider.GALLERY)
 //                .galleryMimeTypes(
 //                    arrayOf(
@@ -145,20 +109,6 @@ class UserRegistrationActivity : AppCompatActivity() {
 //                        "image/jpeg",
 //                    )
 //                )
-
-                //Если ни то ни другое предложит выбрать в приложении
-
-                .createIntent(pickPhotoLauncher::launch) //Запуск
-        }
-
-        binding.selectAvatarFromGallery.setOnClickListener {
-            //регистрируем нажатия на кнопку выбора аватарки selectAvatarFromGallery
-            Log.d("MainActivity", "selectAvatarFromGallery button clicked")
-            //выбираем изображение или фото из галереи смратфона
-
-            //Можно также воспользоваться одним из вариантов с ImagePicker
-
-            pickImageFromGallery ()
         }
     }
 
@@ -170,19 +120,10 @@ class UserRegistrationActivity : AppCompatActivity() {
         pickImageFromGallery.launch(intent)
     }
 
-    @SuppressLint("QueryPermissionsNeeded")
-    private fun takePictureMethod() {
-        Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
-            takePictureIntent.resolveActivity(packageManager)?.also {
-                takePicture.launch(takePictureIntent)
-            }
-        }
-    }
-
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { map ->
-            if (map.values.all {it} && map.values.isNotEmpty()) {
-                takePictureMethod()
+            if (map.values.all { it } && map.values.isNotEmpty()) {
+                ImagePicker()
             } else {
                 Toast.makeText(
                     applicationContext,
@@ -191,14 +132,15 @@ class UserRegistrationActivity : AppCompatActivity() {
                 ).show()
             }
         }
-    private fun checkPermissions (){
-        val isAllGranted = REQUIRED_PERMISSIONS.all{ permissions ->
+
+    private fun checkPermissions() {
+        val isAllGranted = REQUIRED_PERMISSIONS.all { permissions ->
             ContextCompat.checkSelfPermission(
                 applicationContext, permissions
             ) == PackageManager.PERMISSION_GRANTED
         }
         if (isAllGranted) {
-            takePictureMethod()
+            ImagePicker()
             Toast.makeText(
                 applicationContext,
                 "Permissions granted",
@@ -208,7 +150,6 @@ class UserRegistrationActivity : AppCompatActivity() {
             permissionLauncher.launch(REQUIRED_PERMISSIONS)
         }
     }
-
 
     //метод регистрации пользователя
     private fun registrationMethod() {
@@ -228,7 +169,7 @@ class UserRegistrationActivity : AppCompatActivity() {
             return
         }
 
-        //функции отслеживания ввода данных в поля emal и пароля (для журнала событий)
+        //регистрируем ввод данных в поля email и пароля (для журнала событий)
         Log.d("MainActivity", "E-mail is:$registrationEmail")
         Log.d("MainActivity", "Password is: + $registrationPassword")
 
